@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>Jogo do Dado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    select, input, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e9f5e9;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🎲 Jogo do Dado</h2>
+    <select id="opcao">
+      <option value="1">Depositar</option>
+      <option value="2">Sacar</option>
+      <option value="3">Jogar dado (R$10)</option>
+      <option value="4">Modo 50%</option>
+      <option value="5">Mostrar ganhos</option>
+    </select>
+    <input type="number" id="valor" placeholder="Digite o valor (se necessário)" inputmode="decimal">
+    <button onclick="executarOpcao()">Executar</button>
+    <div class="output" id="saida"></div>
+  </div>
+
+  <script>
+    let saldo = 0;
+    let depositos = 0;
+    let saques = 0;
+    let ganhosDado = 0;
+    let ganhosModo50 = 0;
+
+    function chanceModo50(lucro) {
+      if (lucro <= 50) return 0.5;
+      else if (lucro <= 100) return 0.4;
+      else return 0.3;
+    }
+
+    function chanceModoDado(lucro) {
+      if (lucro <= 50) return 6;
+      else if (lucro <= 100) return 8;
+      else return 10;
+    }
+
+    function executarOpcao() {
+      const opcao = document.getElementById('opcao').value;
+      const valorInput = parseFloat(document.getElementById('valor').value);
+      const saida = document.getElementById('saida');
+      const lucroTotal = ganhosDado + ganhosModo50;
+
+      switch (opcao) {
+        case "1":
+          if (!isNaN(valorInput) && valorInput > 0) {
+            saldo += valorInput;
+            depositos += valorInput;
+            saida.innerHTML = `💰 Depósito de R$${valorInput.toFixed(2)} realizado. Saldo: R$${saldo.toFixed(2)}`;
+          } else {
+            saida.innerHTML = "⚠️ Digite um valor válido para depositar.";
+          }
+          break;
+
+        case "2":
+          if (!isNaN(valorInput) && valorInput > 0 && valorInput <= saldo) {
+            saldo -= valorInput;
+            saques += valorInput;
+            saida.innerHTML = `💸 Saque de R$${valorInput.toFixed(2)} realizado. Saldo: R$${saldo.toFixed(2)}`;
+          } else {
+            saida.innerHTML = "⚠️ Saldo insuficiente ou valor inválido.";
+          }
+          break;
+
+        case "3":
+          if (saldo >= 10) {
+            saldo -= 10;
+            const dificuldade = chanceModoDado(lucroTotal);
+            const resultado = Math.floor(Math.random() * dificuldade) + 1;
+            if (resultado === 6) {
+              saldo += 50;
+              ganhosDado += 50;
+              saida.innerHTML = `🎯 Você tirou ${resultado}. Ganhou R$50! Saldo: R$${saldo.toFixed(2)}`;
+            } else {
+              saida.innerHTML = `🎲 Você tirou ${resultado}. Não ganhou. Saldo: R$${saldo.toFixed(2)}`;
+            }
+          } else {
+            saida.innerHTML = "⚠️ Saldo insuficiente para jogar o dado.";
+          }
+          break;
+
+        case "4":
+          if (!isNaN(valorInput) && valorInput > 0 && valorInput <= saldo) {
+            saldo -= valorInput;
+            const prob = chanceModo50(lucroTotal);
+            if (Math.random() < prob) {
+              const ganho = valorInput * 2;
+              saldo += ganho;
+              ganhosModo50 += valorInput;
+              saida.innerHTML = `✅ Você ganhou! Recebeu R$${ganho.toFixed(2)}. Saldo: R$${saldo.toFixed(2)}`;
+            } else {
+              ganhosModo50 -= valorInput;
+              saida.innerHTML = `❌ Você perdeu a aposta. Saldo: R$${saldo.toFixed(2)}`;
+            }
+          } else {
+            saida.innerHTML = "⚠️ Saldo insuficiente ou valor inválido para apostar.";
+          }
+          break;
+
+        case "5":
+          saida.innerHTML = `📊 <strong>Resumo dos Ganhos:</strong><br>
+            Total depositado: R$${depositos.toFixed(2)}<br>
+            Total sacado: R$${saques.toFixed(2)}<br>
+            Ganhos no dado: R$${ganhosDado.toFixed(2)}<br>
+            Lucro/Prejuízo no modo 50%: R$${ganhosModo50.toFixed(2)}<br>
+            Saldo atual: R$${saldo.toFixed(2)}`;
+          break;
+
+        default:
+          saida.innerHTML = "⚠️ Opção inválida.";
+      }
+
+      document.getElementById('valor').value = '';
+    }
+  </script>
+</body>
+</html>
